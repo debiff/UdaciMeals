@@ -7,6 +7,8 @@ import Modal from 'react-modal'
 import Loading from "react-loading";
 import { fetchRecipes } from '../utils/api'
 import FoodList from "./FoodList";
+import ShoppingList from "./ShoppingList";
+
 
 class App extends Component {
     state = {
@@ -14,7 +16,8 @@ class App extends Component {
         meal: null,
         day: null,
         food: null,
-        loadingFood: false
+        loadingFood: false,
+        ingredientsModalOpen: false
     }
     openFoodModal = ({ meal, day }) => {
         this.setState(() => ({
@@ -46,13 +49,36 @@ class App extends Component {
                 loadingFood: false,
             })))
     }
+    openIngredientModal = () => this.setState(() => ({ ingredientsModalOpen:true }))
+    closeIngredientModal = () => this.setState(() => ({ ingredientsModalOpen:false }))
+    generateShoppingList = () => {
+        return this.props.calendar.reduce((result, { meals }) => {
+            const { breakfast, lunch, dinner } = meals
+
+            breakfast && result.push(breakfast)
+            lunch && result.push(lunch)
+            dinner && result.push(dinner)
+
+            return result
+        }, [])
+            .reduce((ings, { ingredientLines }) => ings.concat(ingredientLines), [])
+    }
     render() {
-        const { foodModalOpen, loadingFood, food} = this.state
+        const { foodModalOpen, loadingFood, food, ingredientsModalOpen} = this.state
         const { remove, calendar, selectRecipe } = this.props;
         const mealOrder = ['breakfast', 'lunch', 'dinner'];
 
         return (
             <div className='container'>
+
+                <div className='nav'>
+                    <h1 className='header'>UdaciMeals</h1>
+                    <button
+                        className='shopping-list'
+                        onClick={this.openIngredientModal}>
+                        Shopping List
+                    </button>
+                </div>
                 <ul className='meal-types'>
                     {mealOrder.map((mealType) => {
                         return(
@@ -84,7 +110,6 @@ class App extends Component {
                         ))}
                     </div>
                 </div>
-
                 <Modal
                     className='modal'
                     overlayClassName='overlay'
@@ -123,6 +148,15 @@ class App extends Component {
                                     />)}
                             </div>}
                     </div>
+                </Modal>
+                <Modal
+                    className='modal'
+                    overlayClassName='overlay'
+                    isOpen={ingredientsModalOpen}
+                    onRequestClose={this.closeIngredientModal}
+                    contentLabel='Modal'
+                >
+                    {ingredientsModalOpen && <ShoppingList list={this.generateShoppingList()}/>}
                 </Modal>
 
             </div>
